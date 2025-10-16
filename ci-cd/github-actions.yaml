@@ -1,0 +1,59 @@
+# File: .github/workflows/deploy.yml
+
+name: Deploy to ECS
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  AWS_REGION: us-east-1                            # ✅ Change if you're using a different region
+  ECR_REPOSITORY: wild-rydes                      # ✅ Your ECR repo name
+  ECS_CLUSTER: wild-rydes-cluster                 # ✅ Your ECS cluster name
+  ECS_SERVICE: wild-rydes-service                 # ✅ Your ECS service name
+  IMAGE_TAG: latest
+
+jobs:
+  deploy:
+    name: Build & Deploy to ECS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Log in to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build, Tag, and Push Docker image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          IMAGE_URI=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
+          echo "Building image: $IMAGE_URI"
+          docker build -t $IMAGE_URI .
+          docker push $IMAGE_URI
+
+      - name: Update ECS Service to Deploy New Image
+        run: |
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service ${{ env.ECS_SERVICE }} \
+            --force-new-deployment \
+            --region ${{ env.AWS_REGION }}
+
+      - name: Notify via SNS
+        if: success()
+        run: |
+          aws sns publish \
+            --topic-arn ${{ secrets.SNS_TOPIC_ARN }} \
+            --message "✅ New deployment completed for service: ${{ env.ECS_SERVICE }}" \
+            --region ${{ env.AWS_REGION }}
