@@ -6,9 +6,9 @@ app = Flask(__name__)
 @app.route('/')
 def home():
     return '''
-    <h1>Wild Rydes</h1>
+    <h1>Company Name: Wild Rydes</h1>
     <p>Developer: Saravanan Nadanasabesan</p>
-    <p>Student ID: 101013057</p>
+    <p>Company ID: 101013057</p>
     '''
 
 if __name__ == '__main__':
