@@ -1,5 +1,3 @@
-# File: .github/workflows/deploy.yml
-
 name: Deploy to ECS
 
 on:
@@ -8,10 +6,10 @@ on:
       - main
 
 env:
-  AWS_REGION: us-east-1                            # ✅ Change if you're using a different region
-  ECR_REPOSITORY: wild-rydes                      # ✅ Your ECR repo name
-  ECS_CLUSTER: wild-rydes-cluster                 # ✅ Your ECS cluster name
-  ECS_SERVICE: wild-rydes-service                 # ✅ Your ECS service name
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: wild-rydes
+  ECS_CLUSTER: wild-rydes-cluster
+  ECS_SERVICE: wild-rydes-service
   IMAGE_TAG: latest
 
 jobs:
@@ -33,11 +31,14 @@ jobs:
       - name: Log in to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
+        with:
+          mask-password: true   # ✅ This will suppress the warning
 
       - name: Build, Tag, and Push Docker image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
+          set -e  # ✅ Fail early on any error
           IMAGE_URI=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
           echo "Building image: $IMAGE_URI"
           docker build -t $IMAGE_URI .
@@ -45,6 +46,7 @@ jobs:
 
       - name: Update ECS Service to Deploy New Image
         run: |
+          set -e
           aws ecs update-service \
             --cluster ${{ env.ECS_CLUSTER }} \
             --service ${{ env.ECS_SERVICE }} \
