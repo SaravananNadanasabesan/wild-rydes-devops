@@ -10,6 +10,7 @@ def home():
     <p>Developer: Saravanan Nadanasabesan</p>
     <p>Company ID: 101013057</p>
     <p>Joining Date: 2026-01-05</p>
+    <p>Course: Implementing DevOps Solutions</p>
     '''
 
 if __name__ == '__main__':
