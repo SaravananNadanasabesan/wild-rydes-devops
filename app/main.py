@@ -9,6 +9,7 @@ def home():
     <h1>Company Name: Wild Rydes</h1>
     <p>Developer: Saravanan Nadanasabesan</p>
     <p>Company ID: 101013057</p>
+    <p>Joining Date: 2026-01-05</p>
     '''
 
 if __name__ == '__main__':
